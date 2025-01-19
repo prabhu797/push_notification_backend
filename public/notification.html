@@ -1,0 +1,64 @@
+<!-- public/notification.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Send Notification</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+  <div class="container mt-5">
+    <h1 class="text-center">Send Push Notification</h1>
+    <form id="notification-form">
+      <div class="mb-3">
+        <label for="key" class="form-label">Key (Password)</label>
+        <input type="text" class="form-control" id="key" placeholder="Enter your key" required>
+      </div>
+      <div class="mb-3">
+        <label for="title" class="form-label">Title</label>
+        <input type="text" class="form-control" id="title" placeholder="Enter title" required>
+      </div>
+      <div class="mb-3">
+        <label for="message" class="form-label">Message</label>
+        <textarea class="form-control" id="message" rows="3" placeholder="Enter message" required></textarea>
+      </div>
+      <button type="submit" class="btn btn-primary">Send Notification to All</button>
+    </form>
+    <div id="response-message" class="mt-3"></div>
+  </div>
+
+  <script>
+    document.getElementById("notification-form").addEventListener("submit", async function (e) {
+      e.preventDefault();
+
+      const key = document.getElementById("key").value;
+      const title = document.getElementById("title").value;
+      const message = document.getElementById("message").value;
+
+      const responseMessage = document.getElementById("response-message");
+      responseMessage.innerHTML = '';
+
+      try {
+        const response = await fetch('/send-notification', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ key, title, message }),
+        });
+
+        const result = await response.json();
+
+        if (result.status === 'Success') {
+          responseMessage.innerHTML = `<div class="alert alert-success">Notifications sent successfully!</div>`;
+        } else {
+          responseMessage.innerHTML = `<div class="alert alert-danger">${result.message}</div>`;
+        }
+      } catch (error) {
+        responseMessage.innerHTML = `<div class="alert alert-danger">Error: ${error.message}</div>`;
+      }
+    });
+  </script>
+</body>
+</html>
