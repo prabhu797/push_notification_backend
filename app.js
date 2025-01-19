@@ -92,11 +92,6 @@ app.post("/send-notification", async (req, res) => {
             await webpush.sendNotification(subscription, payload);
         } catch (error) {
             console.error("Error sending notification:", error);
-            return res.status(500).json({
-                status: "Failure",
-                message: "Failed to send notification",
-                error: error.message,
-            });
         }
     }
 
