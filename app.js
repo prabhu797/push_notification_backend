@@ -5,6 +5,7 @@ import cors from "cors";
 import dotenv from "dotenv";
 import { fileURLToPath } from "url";
 import { dirname, join } from "path";
+import fs from "fs";
 
 // Load environment variables from .env file
 dotenv.config();
@@ -30,6 +31,8 @@ webpush.setVapidDetails(
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
+const subscriptionsFilePath = join(__dirname, 'subscriptions.txt');
+
 // Serve static files from the 'assets/images' folder
 app.use('/assets/images', express.static(join(__dirname, 'assets', 'images')));
 
@@ -52,11 +55,23 @@ app.get("/notification", (req, res) => {
 
 // In-memory database for subscriptions (For demo purposes)
 const subDatabse = [];
+try {
+    const data = fs.readFileSync(subscriptionsFilePath, 'utf8');
+    subDatabse = JSON.parse(data);  // Convert the stored JSON string back into an array
+} catch (error) {
+    console.log("No existing subscriptions file, starting fresh.");
+}
 
 // Route to save subscriptions
 app.post("/save-subscription", (req, res) => {
     subDatabse.push(req.body);
-    res.json({ status: "Success", message: "Subscription saved!" });
+    // Write the updated subscriptions array to the file
+    try {
+        fs.writeFileSync(subscriptionsFilePath, JSON.stringify(subDatabse));
+        res.json({ status: "Success", message: "Subscription saved!" });
+    } catch (error) {
+        res.status(500).json({ status: "Failure", message: "Error saving subscription", error: error.message });
+    }    
 });
 
 // Route to send notifications to all subscribers
@@ -96,6 +111,16 @@ app.post("/send-notification", async (req, res) => {
     }
 
     res.json({ status: "Success", message: "Messages sent to all subscribers" });
+});
+
+// Route to download the subscription file
+app.get("/download-subscriptions", (req, res) => {
+    res.download(subscriptionsFilePath, 'subscriptions.txt', (err) => {
+        if (err) {
+            console.log("Error downloading file:", err);
+            res.status(500).send("Error downloading the file.");
+        }
+    });
 });
 
 // Start the server
